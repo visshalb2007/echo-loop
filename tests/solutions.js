@@ -95,4 +95,34 @@
     bot.hold(['right'], () => bot.done() || bot.state() !== 'play');
     return bot.done();
   };
+
+  // 6. Echo Tower -- the ledge is too high for a single echo, so echo B is stacked on
+  //    echo A to raise the launch pad; the player jumps straight up and lands on top.
+  S.level_6 = function () {
+    const bot = b();
+    const climb = () => {
+      bot.hold(['right'], () => bot.x() >= 636);
+      bot.hold(['right', 'jump'], () => bot.onGround() && bot.x() > 660);
+    };
+    bot.restart();
+    // loop 1: echo A stands on the block
+    climb();
+    bot.hold(['left'], () => bot.x() <= 716);
+    bot.echo();
+    // loop 2: wait for A to settle, climb onto A, drop echo B on top of A
+    bot.hold([], () => bot.frame() >= 170);
+    climb();
+    bot.hold(['right'], () => bot.x() >= 714);
+    bot.echo();
+    // loop 3: wait for both to settle, then stack up: block -> tower top -> ledge
+    bot.hold([], () => bot.frame() >= 400);
+    climb();
+    bot.hold(['left'], () => bot.x() <= 690);
+    bot.hold(['jump'], 14);
+    bot.hold(['right'], 6);
+    bot.hold([], () => bot.onGround() && bot.y() < 360);
+    bot.hold(['right', 'jump'], () => bot.onGround() && bot.y() < 270);
+    bot.hold(['right'], () => bot.done() || bot.state() !== 'play');
+    return bot.done();
+  };
 })();
