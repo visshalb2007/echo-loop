@@ -47,6 +47,12 @@ const LEVELS = [
     platforms: [[0, 500, 960, 40], [660, 436, 100, 64], [790, 310, 170, 14]]
   },
   {
+    name: 'Echo Tower', solidEchoes: true,
+    hint: 'This ledge is higher than one echo can reach. Stack a second echo on the first to build a tower.',
+    start: [60, 468], exit: { x: 880, y: 221, w: 34, h: 64 }, maxGhosts: 3,
+    platforms: [[0, 500, 960, 40], [660, 436, 100, 64], [790, 285, 170, 14]]
+  },
+  {
     name: 'Final Loop',
     hint: 'Shield the beam, hold the button, then run for the exit. Mind the spikes.',
     start: [140, 468], exit: { x: 860, y: 436, w: 34, h: 64 }, maxGhosts: 3,
