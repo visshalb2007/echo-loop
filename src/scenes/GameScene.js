@@ -59,6 +59,7 @@ class GameScene extends Phaser.Scene {
     this.bannerT = 0;
     this.paused = false;
     this.loops = 0;
+    this.run = { deaths: 0 };   // per-level stats for the results table
     this.inp = {};
     this.startRound();
   }
@@ -119,6 +120,7 @@ class GameScene extends Phaser.Scene {
     Sfx.death();
     this.cameras.main.shake(260, 0.012);
     this.burst(this.player.x + 12, this.player.y + 16, 0xe8fbff, 28);
+    this.run.deaths++;
     this.registry.set('deaths', (this.registry.get('deaths') || 0) + 1);
     this.time.delayedCall(700, () => { this.startRound(); });
   }
@@ -129,6 +131,9 @@ class GameScene extends Phaser.Scene {
     const loops = this.loops + 1;         // the loops used, including the one that finished
     const time = this.levelT;
     const best = Store.recordBest(this.li, loops, time);
+    const results = this.registry.get('results') || [];
+    results.push({ level: this.li, name: this.L.name, loops, time, deaths: this.run.deaths });
+    this.registry.set('results', results);
     Sfx.win();
     this.burst(this.player.x + 12, this.player.y + 16, COLS.exit, 36);
     if (best.improved) this.showBanner('NEW BEST!  ' + loops + ' loops, ' + time.toFixed(1) + 's', 1.8);

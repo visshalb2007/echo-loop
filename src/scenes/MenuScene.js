@@ -61,6 +61,7 @@ class MenuScene extends Phaser.Scene {
     Sfx.init();
     Sfx.click();
     this.registry.set('deaths', 0);
+    this.registry.set('results', []);
     this.cameras.main.fadeOut(250);
     this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Game', { level: i }));
   }
