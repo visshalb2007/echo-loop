@@ -20,20 +20,36 @@ class MenuScene extends Phaser.Scene {
     ];
     lines.forEach((s, i) => T(480, 262 + i * 28, 17, '#cfe3ff', s));
 
+    // Level cards are laid out dynamically, so any number of levels fits:
+    // centres are `gap` apart and the whole row is centred on the screen.
+    const n = LEVELS.length, y = 410;
+    const gap = Math.min(170, 880 / n);
+    const cw = Math.min(150, gap - 16);
+    const x0 = 480 - (n - 1) * gap / 2;
     this.boxes = [];
     LEVELS.forEach((L, i) => {
-      const x = 140 + i * 170, y = 410;
-      const r = this.add.rectangle(x, y, 150, 74, 0x16203a).setStrokeStyle(2, 0x35e0ff)
-        .setInteractive({ useHandCursor: true });
+      const x = x0 + i * gap;
+      const best = Store.best(i), cleared = !!best;
+      const r = this.add.rectangle(x, y, cw, 74, 0x16203a)
+        .setStrokeStyle(2, cleared ? 0x59ffa8 : 0x35e0ff).setInteractive({ useHandCursor: true });
       r.on('pointerover', () => r.setFillStyle(0x24345f));
       r.on('pointerout', () => r.setFillStyle(0x16203a));
       r.on('pointerdown', () => this.start(i));
-      this.add.text(x, y - 18, String(i + 1), { fontFamily: FONT, fontSize: '26px', color: '#ffffff' }).setOrigin(0.5, 0.5);
-      this.add.text(x, y + 14, L.name, { fontFamily: FONT, fontSize: '14px', color: '#9fb4e6' }).setOrigin(0.5, 0.5);
+      this.add.text(x, y - 20, String(i + 1), { fontFamily: FONT, fontSize: '24px', color: '#ffffff' }).setOrigin(0.5, 0.5);
+      this.add.text(x, y + 4, L.name, {
+        fontFamily: FONT, fontSize: '13px', color: '#cfe3ff', align: 'center', wordWrap: { width: cw - 10 }
+      }).setOrigin(0.5, 0.5);
+      const sub = cleared ? best.loops + ' loops, ' + best.time.toFixed(1) + 's' : 'not cleared';
+      this.add.text(x, y + 26, sub, {
+        fontFamily: FONT, fontSize: '11px', color: cleared ? '#59ffa8' : '#5f7099'
+      }).setOrigin(0.5, 0.5);
+      this.boxes.push(r);
     });
 
-    T(480, 480, 16, '#59ffa8', 'Click a level, press 1-5, or press SPACE to start');
-    this.keys = this.input.keyboard.addKeys('ONE,TWO,THREE,FOUR,FIVE,SPACE,ENTER');
+    T(480, 480, 16, '#59ffa8', 'Click a level, press 1-' + n + ', or press SPACE to start');
+    const NAMES = ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE'];
+    this.levelKeys = NAMES.slice(0, Math.min(n, NAMES.length));
+    this.keys = this.input.keyboard.addKeys(this.levelKeys.concat(['SPACE', 'ENTER']).join(','));
     this.input.keyboard.on('keydown', () => Sfx.init());
     this.input.on('pointerdown', () => Sfx.init());
     this.starting = false;
@@ -51,7 +67,7 @@ class MenuScene extends Phaser.Scene {
 
   update(time) {
     const J = Phaser.Input.Keyboard.JustDown, k = this.keys;
-    ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE'].forEach((n, i) => { if (J(k[n])) this.start(i); });
+    this.levelKeys.forEach((name, i) => { if (J(k[name])) this.start(i); });
     if (J(k.SPACE) || J(k.ENTER)) this.start(0);
 
     // little demo: a player and three echoes following its path
