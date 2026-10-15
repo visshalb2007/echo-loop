@@ -29,7 +29,7 @@ class GameScene extends Phaser.Scene {
     this.tHint.setText(L.hint);
     this.tBanner = T(480, 190, 38, '#ffffff', 0.5).setStroke('#0b1020', 6).setAlpha(0);
 
-    this.keys = this.input.keyboard.addKeys('LEFT,RIGHT,UP,A,D,W,SPACE,R,BACKSPACE,ESC');
+    this.keys = this.input.keyboard.addKeys('LEFT,RIGHT,UP,A,D,W,SPACE,R,BACKSPACE,ESC,M');
     this.input.keyboard.on('keydown', () => Sfx.init());
 
     this.plat = L.platforms.map(p => ({ x: p[0], y: p[1], w: p[2], h: p[3] }));
@@ -206,6 +206,7 @@ class GameScene extends Phaser.Scene {
       this.showBanner('Level reset', 0.9);
     }
     if (J(k.ESC)) this.scene.start('Menu');
+    if (J(k.M)) this.showBanner(Sfx.toggleMute() ? 'Sound off' : 'Sound on', 0.8);
   }
 
   update(time, delta) {

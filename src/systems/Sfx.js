@@ -3,6 +3,13 @@ const Sfx = {
   ctx: null,
   muted: false,
 
+  // Load the persisted mute preference (defaults to unmuted).
+  loadPrefs() { this.muted = !!Store.get('muted', false); },
+
+  setMuted(v) { this.muted = !!v; Store.set('muted', this.muted); },
+
+  toggleMute() { this.setMuted(!this.muted); return this.muted; },
+
   init() {
     try {
       if (!this.ctx) {
