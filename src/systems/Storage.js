@@ -43,5 +43,19 @@ const Store = {
     const better = !prev || loops < prev.loops || (loops === prev.loops && time < prev.time);
     if (better) this.set('best.' + level, { loops, time });
     return { improved: better, prev };
+  },
+
+  // Remove every value this game has ever stored (used to reset progress).
+  clear() {
+    const ls = this._ls();
+    if (ls) {
+      try {
+        for (let i = ls.length - 1; i >= 0; i--) {
+          const k = ls.key(i);
+          if (k && k.indexOf(this.PREFIX) === 0) ls.removeItem(k);
+        }
+      } catch (e) { /* ignore */ }
+    }
+    this.mem = {};
   }
 };
