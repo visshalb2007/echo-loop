@@ -169,6 +169,20 @@ class GameScene extends Phaser.Scene {
       const p = Recorder.sample(g.frames, f);
       return { x: p[0], y: p[1], w: PHY.W, h: PHY.H, face: p[2], color: g.color };
     });
+
+    // Solid echoes (opt-in): once an echo has finished replaying it becomes a
+    // platform, unless the player is standing in it (so it can never trap you).
+    // Lasers ignore these -- they only ever stop on static solids.
+    this.echoSolids = [];
+    if (this.L.solidEchoes) {
+      for (let i = 0; i < this.gAct.length; i++) {
+        const g = this.ghosts[i];
+        if (f < g.frames.length) continue;   // still replaying, not resting yet
+        const a = this.gAct[i];
+        if (overlap(this.player, a)) continue;
+        this.echoSolids.push({ x: a.x, y: a.y, w: PHY.W, h: PHY.H, color: a.color });
+      }
+    }
     const acts = [this.player].concat(this.gAct);
     for (const b of this.buttons) {
       b.pressed = acts.some(a => overlap(a, b.rect));
@@ -212,7 +226,8 @@ class GameScene extends Phaser.Scene {
     for (const d of this.doors) if (!d.open && overlap(p, d)) return this.die();
 
     const solids = this.plat.concat(this.movers, this.doors.filter(d => !d.open));
-    p.step(Object.assign({}, this.inp, { jumpPressed: this.jumpQ }), solids);
+    const playerSolids = this.echoSolids.length ? solids.concat(this.echoSolids) : solids;
+    p.step(Object.assign({}, this.inp, { jumpPressed: this.jumpQ }), playerSolids);
     this.jumpQ = false;
     if (p.jumped) { Sfx.jump(); p.jumped = false; }
     this.rec.record(p);
@@ -354,6 +369,11 @@ class GameScene extends Phaser.Scene {
       g.fillStyle(a.color, 0.18); g.fillRoundedRect(a.x - 4, a.y - 4, PHY.W + 8, PHY.H + 8, 9);
       g.fillStyle(a.color, 0.6); g.fillRoundedRect(a.x, a.y, PHY.W, PHY.H, 6);
       g.fillStyle(0x0b1020, 0.8); g.fillRect(a.x + (a.face > 0 ? 13 : 3), a.y + 8, 8, 6);
+    }
+
+    // Outline the echoes that are currently solid platforms.
+    for (const r of (this.echoSolids || [])) {
+      g.lineStyle(2, r.color, 0.95); g.strokeRect(r.x, r.y, r.w, r.h);
     }
 
     // player
