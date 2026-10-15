@@ -31,5 +31,17 @@ const Store = {
       try { ls.setItem(this.PREFIX + key, raw); return; } catch (e) { /* fall through */ }
     }
     this.mem[key] = raw;
+  },
+
+  // ---- best results -------------------------------------------------------
+  // Each level keeps its best clear as { loops, time }. Fewer loops wins;
+  // when two runs use the same number of loops, the faster time wins.
+  best(level) { return this.get('best.' + level, null); },
+
+  recordBest(level, loops, time) {
+    const prev = this.best(level);
+    const better = !prev || loops < prev.loops || (loops === prev.loops && time < prev.time);
+    if (better) this.set('best.' + level, { loops, time });
+    return { improved: better, prev };
   }
 };

@@ -44,6 +44,7 @@ class GameScene extends Phaser.Scene {
     // Play-time tracking: accumulate active seconds and persist them in chunks.
     this.playT = 0;
     this.events.once('shutdown', () => this.flushPlayTime());
+    this.levelT = 0; // elapsed seconds on this level (used to break best-time ties)
 
     this.plat = L.platforms.map(p => ({ x: p[0], y: p[1], w: p[2], h: p[3] }));
     this.hazards = (L.spikes || []).map(s => ({ x: s.x + 3, y: 488, w: s.w - 6, h: 12 }));
@@ -125,9 +126,13 @@ class GameScene extends Phaser.Scene {
   win() {
     if (this.state !== 'play') return;
     this.state = 'win';
+    const loops = this.loops + 1;         // the loops used, including the one that finished
+    const time = this.levelT;
+    const best = Store.recordBest(this.li, loops, time);
     Sfx.win();
     this.burst(this.player.x + 12, this.player.y + 16, COLS.exit, 36);
-    this.showBanner('LOOP CLOSED!', 1.6);
+    if (best.improved) this.showBanner('NEW BEST!  ' + loops + ' loops, ' + time.toFixed(1) + 's', 1.8);
+    else this.showBanner('LOOP CLOSED!', 1.6);
     this.time.delayedCall(1100, () => {
       this.cameras.main.fadeOut(450);
       this.cameras.main.once('camerafadeoutcomplete', () => {
@@ -242,7 +247,7 @@ class GameScene extends Phaser.Scene {
       while (this.acc >= PHY.DT) { this.acc -= PHY.DT; this.step(); }
     }
     const dt = delta / 1000;
-    if (!this.paused) { this.playT += dt; if (this.playT >= 5) this.flushPlayTime(); }
+    if (!this.paused) { this.playT += dt; if (this.playT >= 5) this.flushPlayTime(); if (this.state === 'play') this.levelT += dt; }
     for (const q of this.parts) { q.x += q.vx * dt; q.y += q.vy * dt; q.vy += 900 * dt; q.life -= dt; }
     this.parts = this.parts.filter(q => q.life > 0);
     this.draw();
