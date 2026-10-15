@@ -23,6 +23,8 @@ class GameScene extends Phaser.Scene {
     this.tTime = T(480, 8, 22, '#ffffff', 0.5);
     this.tEch = T(868, 12, 14, '#9fb4e6', 1);
     this.tEch.setText('ECHOES');
+    this.tLoops = T(20, 40, 14, '#9fb4e6');
+    this.tLoops.setText('LOOPS 0');
     this.tKeys = T(480, 60, 13, '#5f7099', 0.5);
     this.tKeys.setText('R end loop early   |   P pause   |   M mute   |   Backspace restart   |   Esc menu');
     this.tHint = T(480, 536, 15, '#b6c7f0', 0.5, 1);
@@ -51,6 +53,7 @@ class GameScene extends Phaser.Scene {
     this.jumpQ = false;
     this.bannerT = 0;
     this.paused = false;
+    this.loops = 0;
     this.inp = {};
     this.startRound();
   }
@@ -84,6 +87,7 @@ class GameScene extends Phaser.Scene {
   endLoop() {
     if (this.state !== 'play') return;
     if (this.rec.frames.length < 20) { this.showBanner('Move first, then press R', 1); return; }
+    this.loops++;
     if (this.ghosts.length >= this.L.maxGhosts) {
       this.ghosts = [];
       this.showBanner('Out of echoes - level reset', 1.6);
@@ -233,6 +237,7 @@ class GameScene extends Phaser.Scene {
     const rem = Math.max(0, (PHY.ROUND_FRAMES - this.frame) / 60);
     this.tTime.setText(rem.toFixed(1) + 's');
     this.tTime.setColor(rem < 3 ? '#ff6b8b' : '#ffffff');
+    this.tLoops.setText('LOOPS ' + this.loops);
     this.tPaused.setAlpha(this.paused ? 1 : 0);
     if (this.bannerT > 0) { this.bannerT -= dt; this.tBanner.setAlpha(Math.min(1, this.bannerT * 3)); }
     else this.tBanner.setAlpha(0);
