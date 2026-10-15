@@ -35,14 +35,19 @@ class WinScene extends Phaser.Scene {
     T(cTime, y, 15, '#59ffa8', tt.toFixed(1) + 's', 1);
     T(cDeaths, y, 15, '#59ffa8', String(td), 1);
 
-    T(480, 448, 18, '#ffffff', 'SPACE: play again     ESC: menu');
+    T(480, 448, 18, '#ffffff', 'SPACE / tap: play again     ESC: menu');
     Sfx.win();
     this.keys = this.input.keyboard.addKeys('SPACE,ESC');
+
+    // Tap (or click) anywhere to continue.
+    this.leaving = false;
+    this.leave = () => { if (this.leaving) return; this.leaving = true; this.scene.start('Menu'); };
+    this.input.on('pointerdown', this.leave);
   }
 
   update(time) {
     const J = Phaser.Input.Keyboard.JustDown;
-    if (J(this.keys.SPACE) || J(this.keys.ESC)) this.scene.start('Menu');
+    if (J(this.keys.SPACE) || J(this.keys.ESC)) this.leave();
     const g = this.g, t = time / 1000;
     g.clear();
     for (let i = 0; i < 3; i++) {

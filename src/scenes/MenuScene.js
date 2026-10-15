@@ -46,10 +46,23 @@ class MenuScene extends Phaser.Scene {
       this.boxes.push(r);
     });
 
-    T(480, 480, 16, '#59ffa8', 'Click a level, press 1-' + n + ', or press SPACE to start');
+    this.isTouch = !!(this.sys.game.device.input && this.sys.game.device.input.touch);
+    T(480, 480, 16, '#59ffa8', this.isTouch
+      ? 'Tap a level to play'
+      : 'Click a level, press 1-' + n + ', or press SPACE to start');
+
+    // Mute toggle (persisted) in the top-right corner.
+    const mb = this.add.circle(905, 36, 22, 0x16203a, 0.34)
+      .setStrokeStyle(2, 0x35e0ff, 0.55).setInteractive({ useHandCursor: true }).setDepth(20);
+    const ml = this.add.text(905, 36, '', { fontFamily: FONT, fontSize: '16px', color: '#cfe3ff' })
+      .setOrigin(0.5, 0.5).setDepth(21);
+    this.paintMute = () => ml.setText(Sfx.muted ? '\u2715' : '\u266A');
+    this.paintMute();
+    mb.on('pointerdown', () => { Sfx.init(); Sfx.toggleMute(); this.paintMute(); });
+
     const NAMES = ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE'];
     this.levelKeys = NAMES.slice(0, Math.min(n, NAMES.length));
-    this.keys = this.input.keyboard.addKeys(this.levelKeys.concat(['SPACE', 'ENTER']).join(','));
+    this.keys = this.input.keyboard.addKeys(this.levelKeys.concat(['SPACE', 'ENTER', 'M']).join(','));
     this.input.keyboard.on('keydown', () => Sfx.init());
     this.input.on('pointerdown', () => Sfx.init());
     this.starting = false;
@@ -70,6 +83,7 @@ class MenuScene extends Phaser.Scene {
     const J = Phaser.Input.Keyboard.JustDown, k = this.keys;
     this.levelKeys.forEach((name, i) => { if (J(k[name])) this.start(i); });
     if (J(k.SPACE) || J(k.ENTER)) this.start(0);
+    if (J(k.M)) { Sfx.toggleMute(); this.paintMute(); }
 
     // little demo: a player and three echoes following its path
     const g = this.g, t = time / 1000, floor = 232;
