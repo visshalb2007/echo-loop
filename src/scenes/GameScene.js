@@ -24,12 +24,13 @@ class GameScene extends Phaser.Scene {
     this.tEch = T(868, 12, 14, '#9fb4e6', 1);
     this.tEch.setText('ECHOES');
     this.tKeys = T(480, 60, 13, '#5f7099', 0.5);
-    this.tKeys.setText('R end loop early   |   Backspace restart level   |   Esc menu');
+    this.tKeys.setText('R end loop early   |   P pause   |   M mute   |   Backspace restart   |   Esc menu');
     this.tHint = T(480, 536, 15, '#b6c7f0', 0.5, 1);
     this.tHint.setText(L.hint);
     this.tBanner = T(480, 190, 38, '#ffffff', 0.5).setStroke('#0b1020', 6).setAlpha(0);
+    this.tPaused = T(480, 250, 44, '#ffffff', 0.5).setStroke('#0b1020', 6).setText('PAUSED').setAlpha(0);
 
-    this.keys = this.input.keyboard.addKeys('LEFT,RIGHT,UP,A,D,W,SPACE,R,BACKSPACE,ESC,M');
+    this.keys = this.input.keyboard.addKeys('LEFT,RIGHT,UP,A,D,W,SPACE,R,BACKSPACE,ESC,M,P');
     this.input.keyboard.on('keydown', () => Sfx.init());
 
     this.plat = L.platforms.map(p => ({ x: p[0], y: p[1], w: p[2], h: p[3] }));
@@ -43,6 +44,7 @@ class GameScene extends Phaser.Scene {
     this.acc = 0;
     this.jumpQ = false;
     this.bannerT = 0;
+    this.paused = false;
     this.inp = {};
     this.startRound();
   }
@@ -192,6 +194,10 @@ class GameScene extends Phaser.Scene {
   // ---------- input / frame loop ----------
   handleKeys() {
     const k = this.keys, J = Phaser.Input.Keyboard.JustDown;
+    if (J(k.P)) this.paused = !this.paused;
+    if (J(k.M)) this.showBanner(Sfx.toggleMute() ? 'Sound off' : 'Sound on', 0.8);
+    if (J(k.ESC)) { this.scene.start('Menu'); return; }
+    if (this.paused) return;
     this.inp = {
       left: k.LEFT.isDown || k.A.isDown,
       right: k.RIGHT.isDown || k.D.isDown,
@@ -205,14 +211,14 @@ class GameScene extends Phaser.Scene {
       this.startRound();
       this.showBanner('Level reset', 0.9);
     }
-    if (J(k.ESC)) this.scene.start('Menu');
-    if (J(k.M)) this.showBanner(Sfx.toggleMute() ? 'Sound off' : 'Sound on', 0.8);
   }
 
   update(time, delta) {
     this.handleKeys();
-    this.acc += Math.min(delta, 50) / 1000;
-    while (this.acc >= PHY.DT) { this.acc -= PHY.DT; this.step(); }
+    if (!this.paused) {
+      this.acc += Math.min(delta, 50) / 1000;
+      while (this.acc >= PHY.DT) { this.acc -= PHY.DT; this.step(); }
+    }
     const dt = delta / 1000;
     for (const q of this.parts) { q.x += q.vx * dt; q.y += q.vy * dt; q.vy += 900 * dt; q.life -= dt; }
     this.parts = this.parts.filter(q => q.life > 0);
@@ -221,6 +227,7 @@ class GameScene extends Phaser.Scene {
     const rem = Math.max(0, (PHY.ROUND_FRAMES - this.frame) / 60);
     this.tTime.setText(rem.toFixed(1) + 's');
     this.tTime.setColor(rem < 3 ? '#ff6b8b' : '#ffffff');
+    this.tPaused.setAlpha(this.paused ? 1 : 0);
     if (this.bannerT > 0) { this.bannerT -= dt; this.tBanner.setAlpha(Math.min(1, this.bannerT * 3)); }
     else this.tBanner.setAlpha(0);
   }
@@ -320,6 +327,9 @@ class GameScene extends Phaser.Scene {
 
     // particles
     for (const q of this.parts) { g.fillStyle(q.c, Math.max(0, q.life / q.max)); g.fillRect(q.x, q.y, 4, 4); }
+
+    // pause dim
+    if (this.paused) { g.fillStyle(0x0b1020, 0.45); g.fillRect(0, 0, 960, 540); }
 
     // HUD: timer bar and echo pips
     const frac = Math.max(0, (PHY.ROUND_FRAMES - f) / PHY.ROUND_FRAMES);
