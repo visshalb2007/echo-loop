@@ -74,4 +74,25 @@
     bot.hold(['right'], () => bot.done() || bot.state() !== 'play');
     return bot.done();
   };
+
+  // 5. Stepping Echo -- echo A stands on the block and turns solid; the player climbs
+  //    onto its head and leaps from there to the high ledge (unreachable otherwise).
+  S.level_5 = function () {
+    const bot = b();
+    const climb = () => {
+      bot.hold(['right'], () => bot.x() >= 636);
+      bot.hold(['right', 'jump'], () => bot.onGround() && bot.x() > 660);
+    };
+    bot.restart();
+    // loop 1: echo A stands on the block near x~717
+    climb();
+    bot.hold(['left'], () => bot.x() <= 718);
+    bot.echo();
+    // loop 2: wait for echo A to settle, climb onto its head, then leap to the ledge
+    bot.hold([], () => bot.frame() >= 200);
+    climb();
+    bot.hold(['right', 'jump'], () => bot.onGround() && bot.y() < 330);
+    bot.hold(['right'], () => bot.done() || bot.state() !== 'play');
+    return bot.done();
+  };
 })();
