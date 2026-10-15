@@ -45,4 +45,33 @@
     bot.hold(['right'], () => bot.done() || bot.state() !== 'play');
     return bot.done();
   };
+
+  // 4. Moving Ground -- the moving platform is only flush with the left edge at
+  //    ~frame 78 and with the right edge at ~frame 222, so we wait, ride, and step off.
+  function crossLevel4(bot) {
+    bot.hold(['right'], () => bot.x() >= 262);   // stop at the ledge edge
+    bot.hold([], () => bot.frame() >= 78);        // wait for the platform to arrive
+    bot.hold(['right'], 10);                      // step on
+    bot.hold([], () => bot.frame() >= 222);       // ride across
+    bot.hold(['right'], () => bot.x() >= 618);    // step off on the far side
+  }
+
+  S.level_4 = function () {
+    const bot = b();
+    bot.restart();
+    // loop 1: echo A stands on the floor button
+    crossLevel4(bot);
+    bot.hold(['right'], () => bot.x() >= 652);
+    bot.echo();
+    // loop 2: echo B climbs onto the ledge and stands on the high button
+    crossLevel4(bot);
+    bot.hold(['left'], () => bot.x() <= 604);
+    bot.hold(['right', 'jump'], () => bot.onGround() && bot.x() > 660);
+    bot.hold(['right'], () => bot.x() >= 700);
+    bot.echo();
+    // loop 3: both buttons held, ride across and run to the exit
+    crossLevel4(bot);
+    bot.hold(['right'], () => bot.done() || bot.state() !== 'play');
+    return bot.done();
+  };
 })();
