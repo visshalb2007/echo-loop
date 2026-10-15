@@ -41,6 +41,12 @@ const LEVELS = [
     doors: [{ x: 830, y: 330, w: 20, h: 170, btns: ['a', 'b'] }]
   },
   {
+    name: 'Stepping Echo', solidEchoes: true,
+    hint: 'Echoes turn solid once they stop. Leave one standing on the block, then stand on its head to reach the ledge.',
+    start: [60, 468], exit: { x: 880, y: 246, w: 34, h: 64 }, maxGhosts: 3,
+    platforms: [[0, 500, 960, 40], [660, 436, 100, 64], [790, 310, 170, 14]]
+  },
+  {
     name: 'Final Loop',
     hint: 'Shield the beam, hold the button, then run for the exit. Mind the spikes.',
     start: [140, 468], exit: { x: 860, y: 436, w: 34, h: 64 }, maxGhosts: 3,
