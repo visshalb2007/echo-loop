@@ -41,6 +41,10 @@ class GameScene extends Phaser.Scene {
     window.addEventListener('blur', this.onBlur);
     this.events.once('shutdown', () => window.removeEventListener('blur', this.onBlur));
 
+    // Play-time tracking: accumulate active seconds and persist them in chunks.
+    this.playT = 0;
+    this.events.once('shutdown', () => this.flushPlayTime());
+
     this.plat = L.platforms.map(p => ({ x: p[0], y: p[1], w: p[2], h: p[3] }));
     this.hazards = (L.spikes || []).map(s => ({ x: s.x + 3, y: 488, w: s.w - 6, h: 12 }));
     this.bcol = {};
@@ -82,6 +86,14 @@ class GameScene extends Phaser.Scene {
   showBanner(text, secs) {
     this.tBanner.setText(text);
     this.bannerT = secs;
+  }
+
+  // Persist accumulated play time (called periodically and on shutdown).
+  flushPlayTime() {
+    if (this.playT > 0) {
+      Store.set('playtime', (Store.get('playtime', 0) || 0) + this.playT);
+      this.playT = 0;
+    }
   }
 
   endLoop() {
@@ -230,6 +242,7 @@ class GameScene extends Phaser.Scene {
       while (this.acc >= PHY.DT) { this.acc -= PHY.DT; this.step(); }
     }
     const dt = delta / 1000;
+    if (!this.paused) { this.playT += dt; if (this.playT >= 5) this.flushPlayTime(); }
     for (const q of this.parts) { q.x += q.vx * dt; q.y += q.vy * dt; q.vy += 900 * dt; q.life -= dt; }
     this.parts = this.parts.filter(q => q.life > 0);
     this.draw();
