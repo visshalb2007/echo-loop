@@ -15,7 +15,8 @@ class MenuScene extends Phaser.Scene {
       'Every loop lasts 12 seconds. Move: Arrows or A / D.   Jump: Space, W or Up.',
       'When time runs out (or you press R) your run becomes an ECHO and replays itself.',
       'Echoes can hold buttons down and absorb lasers. You can keep up to 3.',
-      'Reach the green exit to win. Lasers, spikes and pits restart your loop.'
+      'Reach the green exit to win. Lasers, spikes and pits restart your loop.',
+      'P pauses, M mutes. Touch screens get on-screen buttons after the first tap.'
     ];
     lines.forEach((s, i) => T(480, 262 + i * 28, 17, '#cfe3ff', s));
 
