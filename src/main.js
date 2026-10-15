@@ -1,7 +1,7 @@
 // Game configuration: 960x540 canvas that scales to fit any window.
 Sfx.loadPrefs(); // restore the persisted mute preference before anything plays
 
-new Phaser.Game({
+const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'game',
   width: 960,
@@ -10,3 +10,7 @@ new Phaser.Game({
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   scene: [MenuScene, GameScene, WinScene]
 });
+
+// Expose the game for automated tests. The browser test harness uses this to
+// sleep Phaser's own loop and drive the deterministic 60 Hz step by hand.
+window.__echoLoop = game;
