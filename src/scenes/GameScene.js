@@ -294,11 +294,14 @@ class GameScene extends Phaser.Scene {
     }
 
     // echoes (ghosts): trail + glow + body
-    for (const a of this.gAct) {
-      const gi = this.ghosts.findIndex(q => q.color === a.color);
-      const fr = this.ghosts[gi].frames;
+    // gAct is built in the same order as this.ghosts, so index straight into the
+    // recordings. Sampling is clamped to each ghost's own length so a finished echo
+    // cannot read past the end of its trail.
+    for (let i = 0; i < this.gAct.length; i++) {
+      const a = this.gAct[i], fr = this.ghosts[i].frames;
+      const last = fr.length - 1;
       for (let k = 6; k >= 1; k--) {
-        const q = Recorder.sample(fr, Math.max(0, f - k * 3));
+        const q = fr[Math.max(0, Math.min(last, f - k * 3))];
         g.fillStyle(a.color, 0.05 + 0.025 * (6 - k)); g.fillRoundedRect(q[0], q[1], PHY.W, PHY.H, 6);
       }
       g.fillStyle(a.color, 0.18); g.fillRoundedRect(a.x - 4, a.y - 4, PHY.W + 8, PHY.H + 8, 9);
