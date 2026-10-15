@@ -29,11 +29,14 @@ class GameScene extends Phaser.Scene {
     this.tKeys.setText('R end loop early   |   P pause   |   M mute   |   Backspace restart   |   Esc menu');
     this.tHint = T(480, 536, 15, '#b6c7f0', 0.5, 1);
     this.tHint.setText(L.hint);
+    this.isTouch = !!(this.sys.game.device.input && this.sys.game.device.input.touch);
+    if (this.isTouch) this.tHint.setPosition(480, 112); // keep the hint clear of the on-screen pads
     this.tBanner = T(480, 190, 38, '#ffffff', 0.5).setStroke('#0b1020', 6).setAlpha(0);
     this.tPaused = T(480, 250, 44, '#ffffff', 0.5).setStroke('#0b1020', 6).setText('PAUSED').setAlpha(0);
 
     this.keys = this.input.keyboard.addKeys('LEFT,RIGHT,UP,A,D,W,SPACE,R,BACKSPACE,ESC,M,P');
     this.input.keyboard.on('keydown', () => Sfx.init());
+    this.touch = new Touch(this);
 
     // Pause automatically when the tab / window loses focus, so a loop is never
     // lost to an alt-tab. The loop resumes when the player presses P again.
@@ -225,20 +228,22 @@ class GameScene extends Phaser.Scene {
 
   // ---------- input / frame loop ----------
   handleKeys() {
-    const k = this.keys, J = Phaser.Input.Keyboard.JustDown;
-    if (J(k.P)) this.paused = !this.paused;
+    const k = this.keys, J = Phaser.Input.Keyboard.JustDown, T = this.touch;
+    const tOn = T && T.enabled;
+    // Controls that work while paused.
+    if (J(k.P) || (tOn && T.take('pause'))) this.paused = !this.paused;
     if (J(k.M)) this.showBanner(Sfx.toggleMute() ? 'Sound off' : 'Sound on', 0.8);
-    if (J(k.ESC)) { this.scene.start('Menu'); return; }
+    if (J(k.ESC) || (tOn && T.take('menu'))) { this.scene.start('Menu'); return; }
     if (this.paused) return;
     this.inp = {
-      left: k.LEFT.isDown || k.A.isDown,
-      right: k.RIGHT.isDown || k.D.isDown,
-      jumpHeld: k.SPACE.isDown || k.UP.isDown || k.W.isDown
+      left: k.LEFT.isDown || k.A.isDown || (tOn && T.held.left),
+      right: k.RIGHT.isDown || k.D.isDown || (tOn && T.held.right),
+      jumpHeld: k.SPACE.isDown || k.UP.isDown || k.W.isDown || (tOn && T.held.jump)
     };
     const j1 = J(k.SPACE), j2 = J(k.UP), j3 = J(k.W);
-    if (j1 || j2 || j3) this.jumpQ = true;
-    if (J(k.R)) this.endLoop();
-    if (J(k.BACKSPACE)) {
+    if (j1 || j2 || j3 || (tOn && T.take('jump'))) this.jumpQ = true;
+    if (J(k.R) || (tOn && T.take('echo'))) this.endLoop();
+    if (J(k.BACKSPACE) || (tOn && T.take('restart'))) {
       this.ghosts = [];
       this.startRound();
       this.showBanner('Level reset', 0.9);
