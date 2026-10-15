@@ -125,4 +125,22 @@
     bot.hold(['right'], () => bot.done() || bot.state() !== 'play');
     return bot.done();
   };
+
+  // 7. Final Loop -- echo A shields the laser at the wall before it wakes at 2s,
+  //    echo B holds the button, and the player jumps the spikes to the exit.
+  S.level_7 = function () {
+    const bot = b();
+    bot.restart();
+    // loop 1: echo A walks to the wall and blocks the laser
+    bot.hold(['left'], () => bot.x() <= 2);
+    bot.echo();
+    // loop 2: echo B stands on the button
+    bot.hold(['right'], () => bot.x() >= 412);
+    bot.echo();
+    // loop 3: run right, jump the spikes, through the open door to the exit
+    bot.hold(['right'], () => bot.x() >= 500);
+    bot.hold(['right', 'jump'], () => bot.onGround() && bot.x() > 600);
+    bot.hold(['right'], () => bot.done() || bot.state() !== 'play');
+    return bot.done();
+  };
 })();
