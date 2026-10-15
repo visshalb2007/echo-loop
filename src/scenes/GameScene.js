@@ -33,6 +33,12 @@ class GameScene extends Phaser.Scene {
     this.keys = this.input.keyboard.addKeys('LEFT,RIGHT,UP,A,D,W,SPACE,R,BACKSPACE,ESC,M,P');
     this.input.keyboard.on('keydown', () => Sfx.init());
 
+    // Pause automatically when the tab / window loses focus, so a loop is never
+    // lost to an alt-tab. The loop resumes when the player presses P again.
+    this.onBlur = () => { if (this.state === 'play') this.paused = true; };
+    window.addEventListener('blur', this.onBlur);
+    this.events.once('shutdown', () => window.removeEventListener('blur', this.onBlur));
+
     this.plat = L.platforms.map(p => ({ x: p[0], y: p[1], w: p[2], h: p[3] }));
     this.hazards = (L.spikes || []).map(s => ({ x: s.x + 3, y: 488, w: s.w - 6, h: 12 }));
     this.bcol = {};
