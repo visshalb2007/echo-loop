@@ -1,52 +1,58 @@
 # ECHO LOOP
 <img width="1607" height="866" alt="image" src="https://github.com/user-attachments/assets/35f3ce14-d9de-436e-8f06-7572f4ee7c1f" />
 
-A 2D puzzle-platformer built around one mechanic: **record and replay**.
+**A 12-second time-travel platformer.** Finish a level in one loop, or finish it by
+cooperating with the echoes of your own past attempts.
 
-Every loop lasts 12 seconds. When it ends, your run is saved as an **echo**, a ghost that replays your exact movements while you play the next loop. Echoes can hold buttons down and absorb laser beams, so you solve each level by cooperating with your own past selves.
+Every loop lasts 12 seconds. When it ends, your run is saved as an **echo** — a ghost
+that replays your exact movements while you play the next loop. Echoes hold buttons
+down, block laser beams and (later on) become platforms, so each puzzle is solved by
+splitting one job across several versions of yourself.
 
-Analogy: it is like leaving sticky notes for yourself. Each loop you leave a note, and in the next loop that note walks around and does the job for you.
+Think of it as leaving sticky notes for yourself: each loop you leave a note, and in
+the next loop that note walks around and does the job for you.
 
-## How to run
+7 levels · up to 3 echoes per level · no assets and no dependencies to install.
 
-Phaser 3 is bundled in `lib/`, so no install or internet is needed.
+## Play it
 
-**Option A (easiest):** double-click `index.html`.
+Download the `echo-loop-web` artifact from the latest successful CI run
+([Actions → CI](https://github.com/visshalb2007/echo-loop/actions)), extract it and
+open `index.html`. Phaser 3 is bundled in `lib/`, so there is nothing else to install.
 
-**Option B (local server):**
+To run from a checkout instead, either double-click `index.html`, or serve the folder:
+
 ```
-cd echo-loop
 python -m http.server
 ```
-Then open http://localhost:8000 in your browser.
+
+Then open http://localhost:8000.
 
 ## Controls
 
 | Key | Action |
 |---|---|
-| Arrow keys or A / D | Move |
+| Arrows or A / D | Move |
 | Space, W or Up | Jump (hold for a higher jump) |
-| R | End the current loop early and save it as an echo |
-| Backspace | Restart the level (removes all echoes) |
-| P | Pause / resume (the game also auto-pauses when the window loses focus) |
-| M | Mute / unmute (the choice is remembered) |
-| Esc | Back to menu |
-| 1 to 7 (menu) | Pick a level |
+| R | End the loop now and save it as an echo |
+| Backspace | Restart the level, removing all echoes |
+| P / M / Esc | Pause · mute · back to menu |
+| 1–7 (menu) | Pick a level |
 
-On a **touch device** an on-screen pad appears after the first tap: left, right and **JUMP** on the bottom, plus **ECHO** (same as R), restart, pause and menu buttons. All controls support multi-touch, so you can hold a direction and jump at the same time.
+On a **touch device** an on-screen pad appears after the first tap — left, right, JUMP,
+ECHO (same as R), restart, pause and menu. All of it is multi-touch, so you can hold a
+direction and jump at the same time.
 
-## Rules
+## How a level works
 
-1. A loop lasts 12 seconds. Reach the green exit portal to win the level.
-2. When time runs out, or you press **R**, your run becomes an echo and a new loop starts.
-3. You can keep at most **3 echoes**. If a 4th loop ends without winning, the level resets.
-4. An echo that finishes its recording keeps standing where it ended.
-5. **Buttons** are pressed by you or by any echo standing on them. A **door** opens only while all of its buttons are pressed.
-6. **Lasers** switch on after a delay and kill you. A beam stops at the first echo it touches, so an echo works as a shield.
-7. **Spikes**, lasers and falling into a pit restart the current loop. Your echoes stay.
-8. On levels with **solid echoes** (5 and 6) a resting echo turns into a solid platform you can stand on - unless you are standing inside it. Lasers still pass through solid echoes.
+1. A loop lasts **12 seconds**. Reach the green exit portal to close the level.
+2. Let the timer run out, or press **R**, and the run becomes an echo while a fresh loop starts.
+3. At most **3 echoes** at once. A fourth loop that fails to win resets the level.
+4. An echo that has finished replaying keeps standing where it stopped. **Buttons** are pressed by you or any echo; a **door** opens only while all of its buttons are held.
+5. **Lasers** switch on after a delay and kill you, but a beam stops at the first echo it touches — an echo makes a perfect shield.
+6. **Spikes**, lasers and pits restart the current loop. Your echoes survive.
 
-## Levels
+## The seven levels
 
 | # | Name | New idea |
 |---|---|---|
@@ -58,7 +64,12 @@ On a **touch device** an on-screen pad appears after the first tap: left, right 
 | 6 | Echo Tower | The ledge is too high for one echo - stack two to build a tower. |
 | 7 | Final Loop | Laser shield, button, door and spikes together. |
 
-Levels are plain data in `src/levels/levels.js`, so adding a level needs no new code.
+On levels 5 and 6 an echo that has finished replaying becomes a **solid platform**, but
+never a trap: the game ignores it while you are standing inside it. Lasers still pass
+through it.
+
+Levels are plain data in `src/levels/levels.js` — adding one needs no new code, and
+`maxGhosts` (the echo limit for that level) lives there too.
 
 ## Project structure
 
@@ -92,65 +103,59 @@ echo-loop/
     levels.test.js        node: validates the level data schema
 ```
 
-## Technical notes
+## Design notes
 
-- **Fixed timestep:** the game logic runs at exactly 60 steps per second, so every loop plays out the same way.
-- **Recording:** the Recorder saves the player's position (and facing) each frame. Echoes replay those positions, so they always match what you did, even if the world changes around them.
-- **Custom physics:** the platformer movement (gravity, jump buffer, coyote time, variable jump height, moving-platform carrying) is written by hand in `Entities.js`. It does not use Phaser's physics engine.
-- **Lasers:** each frame a beam is traced in small steps from its emitter to the right until it meets a solid, an echo or the player. Only static geometry stops a beam - solid echoes never block it.
-- **Solid echoes:** with the `solidEchoes` level flag, an echo that has finished replaying becomes a platform. The game skips the platform while the player overlaps it, so an echo can never trap you.
-- **Assets:** there are none. All graphics are drawn with code, and all sounds are generated with the Web Audio API.
+- **Determinism first.** The game logic runs on a fixed 60 Hz step rather than on real
+  elapsed time, and the recorder stores the player's position and facing each step.
+  Echoes replay those stored positions, so a loop always plays out the same way — and
+  the headless tests can drive it frame by frame.
+- **Hand-written physics.** Gravity, jump buffer, coyote time, variable jump height and
+  moving-platform carrying live in `Entities.js`; Phaser's physics engine is not used.
+- **Lasers are traced, not simulated.** Each step a beam walks rightward in small
+  increments until it meets static geometry, an echo or the player. Only static
+  geometry stops it, which is what makes solid echoes safe to stand on.
+- **No assets.** Graphics are drawn with Phaser's graphics API and sounds are Web Audio
+  oscillators, so the whole game is `index.html`, `lib/` and `src/`.
 
 ## Tests
 
-The level data has a schema check that runs under plain node:
-
-```
-node tests/levels.test.js
-```
-
-Every level is also solved end to end by a headless browser harness. Phaser's own
-loop is put to sleep and the fixed 60 Hz step is driven by hand, so each run is
-identical. First install the one dependency:
+`node tests/levels.test.js` validates the level data schema and needs nothing installed.
+The full suite solves every level end to end in a headless browser:
 
 ```
 pip install playwright
 python -m playwright install chromium
-```
-
-Then run the whole suite, or just some levels:
-
-```
 python tests/harness.py          # all levels
 python tests/harness.py 3 7      # only levels 3 and 7
 ```
 
-It prints a PASS/FAIL line per level and fails if the page logged any console
-error. The scripted plans live in `tests/solutions.js` on top of the helpers in
-`tests/bot.js`.
+It prints one PASS/FAIL line per level and fails if the page logged any console error.
+The plans it follows are scripted in `tests/solutions.js` on top of `tests/bot.js`.
 
-## Deploy
+## Builds
 
-Pushing to `main` runs the GitHub Actions workflow in `.github/workflows/ci.yml`.
-It validates the level data with `node tests/levels.test.js` and, if that passes,
-publishes the playable build as a workflow artifact called `echo-loop-web`
-(download it from the run's page, extract it and open `index.html`).
+Pushing to `main` runs [`.github/workflows/ci.yml`](.github/workflows/ci.yml): it
+validates the level data, then packages the playable game and uploads it as the
+`echo-loop-web` artifact (the site itself; extract and open `index.html`). Pushing a
+`v*` tag also attaches `dist/echo-loop-web.zip` to a GitHub release.
 
-GitHub Pages is deliberately not used: it needs a public repository on the Free
-plan. Push a `v*` tag to also attach `echo-loop-web.zip` to a GitHub release.
-
-To build a shareable zip locally:
+GitHub Pages is deliberately not used — it requires a public repository on the Free
+plan. To build the same zip locally:
 
 ```
 bash scripts/package-web.sh      # writes dist/echo-loop-web.zip
 ```
 
-The zip contains only `index.html`, `lib/` and `src/`.
-
 ## How this meets the brief
 
-- **Original concept:** a record-and-replay puzzle mechanic where echoes act as buttons-holders, laser shields and (on later levels) stepping stones.
-- **Code-based mechanics:** recording, replay, buttons, doors, lasers, moving platforms, solid echoes and physics are all written in JavaScript.
-- **Clear objectives and choices:** reach the exit within 12 seconds, planning which echo does which job.
-- **Functional loop with win/lose:** loops, death and restart, level progression, and an ending screen with per-level results.
-- **Polish:** HUD with timer bar, loop counter and echo pips, best-result tracking, in-code sound effects, screen shake, particles, echo trails, fades between levels, hints in every level, pause, mute and full touch support.
+- **Original concept:** record-and-replay puzzling, where echoes act as button-holders,
+  laser shields and stepping stones.
+- **Code-based mechanics:** recording, replay, buttons, doors, lasers, moving platforms,
+  solid echoes and platformer physics are all written from scratch in JavaScript.
+- **Clear goals and choices:** reach the exit within 12 seconds and decide which echo
+  does which job.
+- **A real loop:** win/lose states, loop and level progression, and an ending screen with
+  per-level results.
+- **Polish:** timer bar, loop counter and echo pips in the HUD, best-result tracking,
+  generated sound effects, screen shake, particles, echo trails, level fades, hints,
+  pause, mute and full touch support.
