@@ -1,4 +1,5 @@
 # ECHO LOOP
+<img width="1607" height="866" alt="image" src="https://github.com/user-attachments/assets/35f3ce14-d9de-436e-8f06-7572f4ee7c1f" />
 
 A 2D puzzle-platformer built around one mechanic: **record and replay**.
 
