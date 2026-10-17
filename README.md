@@ -132,8 +132,11 @@ error. The scripted plans live in `tests/solutions.js` on top of the helpers in
 
 Pushing to `main` runs the GitHub Actions workflow in `.github/workflows/ci.yml`.
 It validates the level data with `node tests/levels.test.js` and, if that passes,
-publishes the game to GitHub Pages (enable **Pages -> Build and deployment ->
-GitHub Actions** once in the repository settings).
+publishes the playable build as a workflow artifact called `echo-loop-web`
+(download it from the run's page, extract it and open `index.html`).
+
+GitHub Pages is deliberately not used: it needs a public repository on the Free
+plan. Push a `v*` tag to also attach `echo-loop-web.zip` to a GitHub release.
 
 To build a shareable zip locally:
 

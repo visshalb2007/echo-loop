@@ -3,18 +3,15 @@ name: CI
 on:
   push:
     branches: [main]
+    tags: ['v*']
   pull_request:
   workflow_dispatch:
 
-# Allow the deploy job to publish to GitHub Pages.
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
-# Only one Pages deployment at a time.
 concurrency:
-  group: pages
+  group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -29,26 +26,52 @@ jobs:
       - name: Validate level data
         run: node tests/levels.test.js
 
-  deploy:
-    name: Deploy to GitHub Pages
+  # GitHub Pages is not available for a private repo on the Free plan, so the
+  # playable build is published as a workflow artifact instead (and attached to
+  # a release when a v* tag is pushed).
+  package:
+    name: Build playable bundle
     needs: test
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
       - name: Bundle the game for download
         run: bash scripts/package-web.sh
-      - name: Assemble the site
+      - name: Assemble the site folder
         run: |
           mkdir -p _site
           cp index.html _site/
           cp -r lib src _site/
-      - uses: actions/upload-pages-artifact@v3
+      # Downloads as a zip with index.html at the root: extract and open it.
+      - uses: actions/upload-artifact@v4
         with:
+          name: echo-loop-web
           path: _site
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          if-no-files-found: error
+      # The same files as a single playable zip, kept for the release job.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: echo-loop-web-zip
+          path: dist/echo-loop-web.zip
+          if-no-files-found: error
+
+  release:
+    name: Attach build to release
+    needs: package
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bundle the game for download
+        run: bash scripts/package-web.sh
+      - name: Create or update the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes
+          fi
+          gh release upload "$GITHUB_REF_NAME" dist/echo-loop-web.zip --clobber
